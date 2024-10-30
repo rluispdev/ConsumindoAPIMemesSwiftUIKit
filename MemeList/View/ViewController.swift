@@ -10,63 +10,59 @@ import Alamofire
 
 class ViewController: UIViewController {
 
+    // Instancia a classe MemeController, que gerencia a lógica de dados dos memes
+    var controller: MemeController = MemeController()
+   
+    // Conecta a TableView no Storyboard com o código
     @IBOutlet weak var memeTableView: UITableView!
     
-    //Array para teste
-    var arrayMemes: [MemeObject] = []
-     
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        // Configura o delegate e dataSource da TableView
-        self.memeTableView.delegate = self
-        self.memeTableView.dataSource = self
-        
-        //Teste
-        // Realiza uma requisição para obter os dados dos memes
-        AF.request("https://api.imgflip.com/get_memes").response { response in
-
-            // Verifica se o código de status da resposta é 200 (requisição bem-sucedida)
-            if response.response?.statusCode == 200 {
-                
-                // Verifica se há dados na resposta
-                if let data = response.data {
-                    do {
-                        // Decodifica os dados JSON da resposta para o modelo Meme
-                        let memeModel: Meme? = try JSONDecoder().decode(Meme.self, from: data)
-                        
-                        // Armazena os memes decodificados no array local e recarrega a tabela
-                        self.arrayMemes = memeModel?.data.memes ?? []
-                        self.memeTableView.reloadData() // Atualiza a tabela com os dados obtidos
-                        
-                    } catch {
-                        // Imprime o erro caso a decodificação falhe
-                        print(error)
-                    }
+   // Array de memes para teste local (pode ser substituído pelos dados carregados pela controller)
+        var arrayMemes: [MemeObject] = []
+         
+        override func viewDidLoad() {
+            super.viewDidLoad()
+            
+            // Define o delegate e dataSource da memeTableView como a própria ViewController
+            // Isso permite que a TableView utilize os métodos implementados nesta classe para gerenciar os dados e eventos de célula
+            self.memeTableView.delegate = self
+            self.memeTableView.dataSource = self
+            
+            // Chama o método getRequestMemes da classe MemeController para buscar os memes da API
+            self.controller.getRequestMemes { response, error in
+                if response == true {
+                    // Recarrega a TableView para exibir os dados obtidos
+                    self.memeTableView.reloadData()
+                } else {
+                    // Caso ocorra um erro, imprime o erro no console
+                    print(error ?? "Erro desconhecido")
                 }
             }
         }
-
     }
-}
 
 
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
     
-    // Retorna a quantidade de memes para definir o número de linhas na tabela
+    // Define o número de linhas na tabela com base na quantidade de memes disponíveis
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return self.arrayMemes.count
+      
+        // Acessa o método count() através da variável controller, que é uma instância da classe MemeController
+        // Isso retorna a quantidade de memes armazenados em arrayMemes na MemeController
+        return self.controller.count()
     }
     
-    // Retorna uma célula configurada com o nome do meme correspondente ao índice da linha
+    // Retorna uma célula configurada com o nome do meme correspondente ao índice atual (indexPath)
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
+        // Reutiliza uma célula com o identificador "cell" para otimizar a performance da tabela
         let cell: UITableViewCell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
         
-        // Define o texto da célula como o nome do meme no índice atual
-        cell.textLabel?.text = self.arrayMemes[indexPath.row].name
+        // Define o texto da célula como o nome do meme na posição atual
+        // Acessa o método loadCurrentName() usando a variável controller, que é uma instância de MemeController
+        // Esse método retorna o nome do meme com base no índice fornecido por indexPath
+        cell.textLabel?.text = self.controller.loadCurrentName(indexPath: indexPath)
         return cell
     }
 }
 
- 
+
