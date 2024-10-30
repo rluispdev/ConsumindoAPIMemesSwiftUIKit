@@ -24,7 +24,6 @@ class ViewController: UIViewController {
 
 }
 
-
 extension ViewController: UITableViewDelegate, UITableViewDataSource {
     
     // Retorna a quantidade de memes para definir o número de linhas na tabela
