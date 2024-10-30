@@ -12,7 +12,8 @@ class MemeController {
     
     // Array que armazena os objetos de meme carregados
     private var arrayMemes: [MemeObject] = []
-    
+    weak var delegate: MemeControllerProtocol?
+
     // Método que retorna a quantidade de memes no array
     func count() -> Int {
         // Retorna o número de memes armazenados no arrayMemes
@@ -32,37 +33,28 @@ class MemeController {
         return self.arrayMemes[indexPath.row].name
     }
     
-    // Método que realiza uma requisição para obter dados de memes de uma API
-    func getRequestMemes(completionHandler: @escaping (Bool, Error?) -> Void) {
+    // MARK: Abordagem para tratar requisições com protocolos
+    // Essa abordagem usa um protocolo (MemeControllerProtocol) para delegar o tratamento de sucesso e erro da requisição a outra classe.
+    func getRequestMemesWithProtocol() {
         
-        // Envia uma requisição para obter os dados dos memes da URL fornecida
-        AF.request("https://api.imgflip.com/get_memes").response { response in
-            
-            // Verifica se o código de status da resposta é 200 (requisição bem-sucedida)
+        AF.request("https://api.imgflip.com/get_memes").responseJSON { response in
             if response.response?.statusCode == 200 {
                 
-                // Verifica se a resposta contém dados
                 if let data = response.data {
                     do {
-                        // Tenta decodificar os dados JSON da resposta para o modelo Meme
                         let memeModel: Meme? = try JSONDecoder().decode(Meme.self, from: data)
                         
-                        // Se a decodificação foi bem-sucedida, armazena os memes no array local
-                        // Caso o memeModel contenha memes, eles são adicionados ao arrayMemes
                         self.arrayMemes = memeModel?.data.memes ?? []
+                        self.delegate?.sucess()
                         
-                        // Informa ao completion handler que a operação foi bem-sucedida
-                        completionHandler(true, nil)
-                        
-                    } catch {
-                        // Caso ocorra um erro na decodificação, imprime o erro
+                    }catch {
                         print(error)
-                        
-                        // Informa ao completion handler que a operação falhou, passando o erro
-                        completionHandler(false, error)
+                        self.delegate?.failure(error: error)
                     }
+                    
                 }
             }
+            
         }
     }
 }
